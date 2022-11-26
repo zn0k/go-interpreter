@@ -8,8 +8,9 @@ const (
 	EOF     = "EOF"
 
 	// identifiers and literals
-	IDENT = "IDENT"
-	INT   = "INT"
+	IDENT  = "IDENT"
+	INT    = "INT"
+	STRING = "STRING"
 
 	// operators
 	ASSIGN   = "="
@@ -32,6 +33,8 @@ const (
 	RPAREN    = ")"
 	LBRACE    = "{"
 	RBRACE    = "}"
+	LBRACKET  = "["
+	RBRACKET  = "]"
 
 	// keywords
 	FUNCTION = "FUNCTION"
