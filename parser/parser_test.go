@@ -668,7 +668,7 @@ func TestCallExpressionParsing(t *testing.T) {
 	}
 
 	if len(exp.Arguments) != 3 {
-		t.Fatalf("expected %d arguments, got %d", 3, len(exp.Arguments))
+		t.Fatalf("expected %d arguments, got %d (%+v)", 3, len(exp.Arguments), exp.Arguments)
 	}
 
 	testLiteralExpression(t, exp.Arguments[0], 1)
