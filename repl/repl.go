@@ -3,10 +3,12 @@ package repl
 import (
 	"bufio"
 	"fmt"
+	"interpreter/compiler"
 	"interpreter/evaluator"
 	"interpreter/lexer"
 	"interpreter/object"
 	"interpreter/parser"
+	"interpreter/vm"
 	"io"
 )
 
@@ -14,7 +16,7 @@ const PROMPT = ">>"
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
-	env := object.NewEnvironment()
+	//env := object.NewEnvironment()
 	macroEnv := object.NewEnvironment()
 
 	fmt.Fprintf(out, PROMPT)
@@ -33,13 +35,32 @@ func Start(in io.Reader, out io.Writer) {
 		evaluator.DefineMacros(program, macroEnv)
 		expanded := evaluator.ExpandMacros(program, macroEnv)
 
-		evaluated := evaluator.Eval(expanded, env)
+		// use the VM instead, which isn't very functional right now
+		/*evaluated := evaluator.Eval(expanded, env)
 		if evaluated != nil {
 			io.WriteString(out, evaluated.Inspect())
 			io.WriteString(out, "\n")
 		}
 
-		fmt.Fprintf(out, PROMPT)
+		fmt.Fprintf(out, PROMPT)*/
+
+		comp := compiler.New()
+		err := comp.Compile(expanded)
+		if err != nil {
+			fmt.Fprintf(out, "Compiler error: %s\n", err)
+			continue
+		}
+
+		machine := vm.New(comp.Bytecode())
+		err = machine.Run()
+		if err != nil {
+			fmt.Fprintf(out, "VM execution error: %s\n", err)
+			continue
+		}
+
+		stackTop := machine.StackTop()
+		io.WriteString(out, stackTop.Inspect())
+		io.WriteString(out, "\n")
 	}
 }
 

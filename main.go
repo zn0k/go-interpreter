@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"interpreter/compiler"
 	"interpreter/evaluator"
 	"interpreter/lexer"
 	"interpreter/object"
 	"interpreter/parser"
 	"interpreter/repl"
+	"interpreter/vm"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -21,7 +23,7 @@ func main() {
 		}
 		input := string(buf)
 
-		env := object.NewEnvironment()
+		//env := object.NewEnvironment()
 		macroEnv := object.NewEnvironment()
 
 		l := lexer.New(input)
@@ -37,12 +39,27 @@ func main() {
 		evaluator.DefineMacros(program, macroEnv)
 		expanded := evaluator.ExpandMacros(program, macroEnv)
 
-		evaluated := evaluator.Eval(expanded, env)
+		// switch to VM mode
+		/*evaluated := evaluator.Eval(expanded, env)
 
 		if evaluated != nil {
 			fmt.Println(evaluated.Inspect())
+		}*/
+
+		comp := compiler.New()
+		err = comp.Compile(expanded)
+		if err != nil {
+			fmt.Printf("Compiler error: %s]n", err)
 		}
 
+		machine := vm.New(comp.Bytecode())
+		err = machine.Run()
+		if err != nil {
+			fmt.Printf("VM execution error: %s\n", err)
+		}
+
+		stackTop := machine.StackTop()
+		fmt.Println(stackTop.Inspect())
 	} else {
 		// open REPL
 		user, err := user.Current()
