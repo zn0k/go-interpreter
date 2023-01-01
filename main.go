@@ -58,8 +58,8 @@ func main() {
 			fmt.Printf("VM execution error: %s\n", err)
 		}
 
-		stackTop := machine.StackTop()
-		fmt.Println(stackTop.Inspect())
+		lastPopped := machine.LastPoppedStackElem()
+		fmt.Println(lastPopped.Inspect())
 	} else {
 		// open REPL
 		user, err := user.Current()
