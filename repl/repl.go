@@ -16,8 +16,11 @@ const PROMPT = ">>"
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
-	//env := object.NewEnvironment()
 	macroEnv := object.NewEnvironment()
+
+	constants := []object.Object{}
+	globals := make([]object.Object, vm.GlobalsSize)
+	symbolTable := compiler.NewSymbolTable()
 
 	fmt.Fprintf(out, PROMPT)
 	for scanner.Scan() {
@@ -35,23 +38,17 @@ func Start(in io.Reader, out io.Writer) {
 		evaluator.DefineMacros(program, macroEnv)
 		expanded := evaluator.ExpandMacros(program, macroEnv)
 
-		// use the VM instead, which isn't very functional right now
-		/*evaluated := evaluator.Eval(expanded, env)
-		if evaluated != nil {
-			io.WriteString(out, evaluated.Inspect())
-			io.WriteString(out, "\n")
-		}
-
-		fmt.Fprintf(out, PROMPT)*/
-
-		comp := compiler.New()
+		comp := compiler.NewWithState(symbolTable, constants)
 		err := comp.Compile(expanded)
 		if err != nil {
 			fmt.Fprintf(out, "Compiler error: %s\n", err)
 			continue
 		}
 
-		machine := vm.New(comp.Bytecode())
+		code := comp.Bytecode()
+		constants = code.Constants
+
+		machine := vm.NewWithGlobalsStore(code, globals)
 		err = machine.Run()
 		if err != nil {
 			fmt.Fprintf(out, "VM execution error: %s\n", err)
@@ -61,6 +58,7 @@ func Start(in io.Reader, out io.Writer) {
 		lastPopped := machine.LastPoppedStackElem()
 		io.WriteString(out, lastPopped.Inspect())
 		io.WriteString(out, "\n")
+		fmt.Fprintf(out, PROMPT)
 	}
 }
 
