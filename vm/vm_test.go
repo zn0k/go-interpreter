@@ -43,6 +43,17 @@ func testBooleanObject(expected bool, actual object.Object) error {
 	return nil
 }
 
+func testStringObject(expected string, actual object.Object) error {
+	result, ok := actual.(*object.String)
+	if !ok {
+		return fmt.Errorf("object is not a string, got %T (%+v)", actual, actual)
+	}
+	if result.Value != expected {
+		return fmt.Errorf("object has the wrong value, expected %q, got %q", expected, result.Value)
+	}
+	return nil
+}
+
 func runVmTests(t *testing.T, tests []vmTestCase) {
 	t.Helper()
 
@@ -81,6 +92,30 @@ func testExpectedObject(t *testing.T, expected any, actual object.Object) {
 		if err != nil {
 			t.Errorf("testBooleanObject failed: %s", err)
 		}
+
+	case string:
+		err := testStringObject(string(expected), actual)
+		if err != nil {
+			t.Errorf("testStringObject failed: %s", err)
+		}
+
+	case []int:
+		array, ok := actual.(*object.Array)
+		if !ok {
+			t.Errorf("object is not an array, got %T (%+v)", actual, actual)
+		}
+
+		if len(array.Elements) != len(expected) {
+			t.Errorf("wrong number of elements in array, expected %d, got %d", len(expected), len(array.Elements))
+		}
+
+		for i, expectedElement := range expected {
+			err := testIntegerObject(int64(expectedElement), array.Elements[i])
+			if err != nil {
+				t.Errorf("testIntegerObject failed: %s", err)
+			}
+		}
+
 	case *object.Null:
 		if actual != Null {
 			t.Errorf("object is not Null: %T (%+v)", actual, actual)
@@ -166,6 +201,26 @@ func TestGlobalLetStatement(t *testing.T) {
 		{"let one = 1; one", 1},
 		{"let one = 1; let two = 2; one + two", 3},
 		{"let one = 1; let two = one + one; one + two", 3},
+	}
+
+	runVmTests(t, tests)
+}
+
+func TestStringExpressions(t *testing.T) {
+	tests := []vmTestCase{
+		{`"monkey"`, "monkey"},
+		{`"mon" + "key"`, "monkey"},
+		{`"mon" + "key" + "banana"`, "monkeybanana"},
+	}
+
+	runVmTests(t, tests)
+}
+
+func TestArrayLiterals(t *testing.T) {
+	tests := []vmTestCase{
+		{"[]", []int{}},
+		{"[1, 2, 3]", []int{1, 2, 3}},
+		{"[1 + 2, 3 * 4, 5 + 6]", []int{3, 12, 11}},
 	}
 
 	runVmTests(t, tests)
