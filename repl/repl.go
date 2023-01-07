@@ -22,6 +22,10 @@ func Start(in io.Reader, out io.Writer) {
 	globals := make([]object.Object, vm.GlobalsSize)
 	symbolTable := compiler.NewSymbolTable()
 
+	for i, v := range object.Builtins {
+		symbolTable.DefineBuiltin(i, v.Name)
+	}
+
 	fmt.Fprintf(out, PROMPT)
 	for scanner.Scan() {
 		line := scanner.Text()
